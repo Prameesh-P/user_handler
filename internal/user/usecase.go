@@ -24,7 +24,7 @@ func NewUserUsecase(userRepository UserRepository) UserUsecase {
 
 func (uc *userUsecase) CreateUser(user *User) (*User, error) {
 	if user.FirstName == "" || user.Email == "" {
-		return nil, errors.New("username and email are required")
+		return nil, errors.New("fistname and email are required")
 	}
 
 	if err := uc.userRepository.Create(user); err != nil {

@@ -1,0 +1,115 @@
+definitions:
+  http.Body:
+    properties:
+      age:
+        type: integer
+      email:
+        type: string
+      first_name:
+        maxLength: 100
+        minLength: 2
+        type: string
+      id:
+        type: integer
+      last_name:
+        maxLength: 100
+        minLength: 2
+        type: string
+      phone:
+        type: string
+    required:
+    - email
+    - first_name
+    - last_name
+    type: object
+info:
+  contact: {}
+paths:
+  /users:
+    delete:
+      consumes:
+      - application/json
+      description: user-creation route.
+      operationId: delete-user
+      parameters:
+      - description: Email address of the user
+        in: query
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+      summary: Delete User with HTTP
+      tags:
+      - Users
+    get:
+      consumes:
+      - application/json
+      description: get-yb-id route.
+      operationId: getbyid-user
+      parameters:
+      - description: Email address of the user
+        in: query
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+      summary: Get by id User with HTTP
+      tags:
+      - Users
+    post:
+      consumes:
+      - application/json
+      description: user-creation route.
+      operationId: create-user
+      parameters:
+      - description: User details
+        in: body
+        name: user_details
+        required: true
+        schema:
+          $ref: '#/definitions/http.Body'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+      summary: Create User with HTTP
+      tags:
+      - Users
+    put:
+      consumes:
+      - application/json
+      description: user-creation route.
+      operationId: update-user
+      parameters:
+      - description: User details
+        in: body
+        name: user_details
+        required: true
+        schema:
+          $ref: '#/definitions/http.Body'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+      summary: Update User with HTTP
+      tags:
+      - Users
+swagger: "2.0"

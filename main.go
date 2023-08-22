@@ -32,8 +32,8 @@ func main() {
 	database.SycnDB()
 
     // Initialize Redis connection
-    redisAddr := "redis:6379"
-    redisPassword := "password"
+    redisAddr := "localhost:6379"
+	redisPassword:= ""
     redisClient, err := database.NewRedisClient(redisAddr, redisPassword)
     if err != nil {
         fmt.Println("Error connecting to Redis:", err)
