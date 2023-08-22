@@ -2,26 +2,86 @@ package main
 
 import (
 	"fmt"
-	"time"
 	"net/http"
-	//"encoding/json"
+	"sync"
+	"time"
+
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+)
+
+var (
+	method1Mutex sync.Mutex
+	db           *gorm.DB
+	err error
 )
 
 type User struct {
-	ID   uint   `gorm:"primaryKey"`
+	ID   uint
 	Name string
 }
 
+func method1(waitTime int, wg *sync.WaitGroup, names *[]string) {
+	defer wg.Done()
 
+	method1Mutex.Lock()
+	defer method1Mutex.Unlock()
 
-var (
+	fmt.Println("Executing Method 1...")
+	time.Sleep(time.Duration(waitTime) * time.Second)
 
-    db *gorm.DB
-    err error
-)
+	var users []User
+	db.Find(&users)
+	for _, u := range users {
+		*names = append(*names, u.Name)
+	}
+	fmt.Println("Method 1 Completed")
+}
+
+func method2(waitTime int, wg *sync.WaitGroup, names *[]string) {
+	defer wg.Done()
+
+	fmt.Println("Executing Method 2...")
+	time.Sleep(time.Duration(waitTime) * time.Second)
+
+	var users []User
+	db.Find(&users)
+	for _, u := range users {
+		*names = append(*names, u.Name)
+	}
+	fmt.Println("Method 2 Completed")
+}
+
+func methodsHandler(c *gin.Context) {
+	var requestData struct {
+		Method   int `json:"method"`
+		WaitTime int `json:"waitTime"`
+	}
+
+	// Parse the JSON request body
+	if err := c.ShouldBindJSON(&requestData); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var wg sync.WaitGroup
+	var names []string
+
+	if requestData.Method == 1 {
+		wg.Add(1)
+		go method1(requestData.WaitTime, &wg, &names)
+	} else if requestData.Method == 2 {
+		wg.Add(1)
+		go method2(requestData.WaitTime, &wg, &names)
+	}
+
+	wg.Wait()
+
+	// Return the list of user names in the response
+	c.JSON(http.StatusOK, gin.H{"userNames": names})
+}
+
 
 func NewPostgresDB(dsn string) (*gorm.DB, error) {
     db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
@@ -30,93 +90,19 @@ func NewPostgresDB(dsn string) (*gorm.DB, error) {
     }
     return db, nil
 }
-
-func init(){
-	
-}
-func method1Wait(waitTime int) {
-	time.Sleep(time.Duration(waitTime) * time.Second)
-}
-
-func method1(c *gin.Context) {
-	var requestData struct {
-		Method    int `json:"method"`
-		WaitTime int `json:"waitTime"`
-	}
-
-	err := c.BindJSON(&requestData)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
-		return
-	}
-
-	fmt.Println("Method 1 Request Received")
-
-	var users []User
-	db.Find(&users)
-
-	fmt.Println("Number of users:", len(users))
-	fmt.Println("Names of users:")
-	for _, user := range users {
-		fmt.Println(user.Name)
-	}
-
-	method1Wait(requestData.WaitTime)
-
-	userNames := make([]string, len(users))
-	for i, user := range users {
-		userNames[i] = user.Name
-	}
-
-	c.JSON(http.StatusOK, userNames)
-}
-
-func method2Wait(waitTime int) {
-	time.Sleep(time.Duration(waitTime) * time.Second)
-}
-
-func method2(c *gin.Context) {
-	var requestData struct {
-		Method    int `json:"method"`
-		WaitTime int `json:"waitTime"`
-	}
-
-	err := c.BindJSON(&requestData)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
-		return
-	}
-
-	fmt.Println("Method 2 Request Received")
-
-	var users []User
-	db.Find(&users)
-
-	fmt.Println("Number of users:", len(users))
-	fmt.Println("Names of users:")
-	for _, user := range users {
-		fmt.Println(user.Name)
-	}
-
-	method2Wait(requestData.WaitTime)
-
-	userNames := make([]string, len(users))
-	for i, user := range users {
-		userNames[i] = user.Name
-	}
-
-	c.JSON(http.StatusOK, userNames)
-}
-
 func main() {
-	dsn :="host=localhost user=postgres password=pramee-12345 dbname=user_handler port=5432 sslmode=disable"
-	NewPostgresDB(dsn)
 
-	router := gin.Default()
+	dsn := "user=username password=password dbname=database_name sslmode=disable"
+	var err error
+	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		panic("Failed to connect to database")
+	}
 
-	router.POST("/methods1", method1)
-	router.POST("/methods2", method2)
+	r := gin.Default()
+	r.POST("/methods", methodsHandler)
 
-	fmt.Println("Server started on :9000")
-	router.Run(":9000")
+	r.Run(":7000")
 }
+
+
