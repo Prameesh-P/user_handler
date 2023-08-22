@@ -10,7 +10,7 @@ import (
 	"github.com/Prameesh-P/user-handler/grpcs"
 	"github.com/Prameesh-P/user-handler/http"
 	"github.com/Prameesh-P/user-handler/internal/database"
-	"github.com/Prameesh-P/user-handler/internal/initializers"
+	 "github.com/Prameesh-P/user-handler/internal/initializers"
 	"github.com/Prameesh-P/user-handler/internal/user"
 	"github.com/Prameesh-P/user-handler/pkg/pb"
 )
@@ -32,8 +32,8 @@ func main() {
 	database.SycnDB()
 
     // Initialize Redis connection
-    redisAddr := "localhost:6379"
-    redisPassword := os.Getenv("RedisPASS")
+    redisAddr := "redis:6379"
+    redisPassword := "password"
     redisClient, err := database.NewRedisClient(redisAddr, redisPassword)
     if err != nil {
         fmt.Println("Error connecting to Redis:", err)
